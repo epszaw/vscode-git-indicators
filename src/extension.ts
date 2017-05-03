@@ -2,6 +2,9 @@
 
 import * as vscode from 'vscode';
 import * as childProcess from 'child_process';
+import * as Promise from 'bluebird';
+
+const exec = Promise.promisify(childProcess.exec);
 
 let gitIndicators;
 let addedCount = 0;
@@ -33,45 +36,22 @@ export function activate(context: vscode.ExtensionContext) {
   gitIndicators = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left
   );
-
-  // Add and configure indicators
-
-  gitIndicators.color = '#fff';
   gitIndicators.command = 'workbench.view.git';
-  // gitIndicators.command = 'git-indicators.test';
-  gitIndicators.text = `$(diff-added)  ${addedCount}  $(diff-removed)  ${removedCount}`;
+  gitIndicators.text = `$(diff-modified) ${addedCount}, ${removedCount}`;
   gitIndicators.show();
 
-  // context.subscriptions.push(...[test, test2]);
-
   vscode.workspace.onDidSaveTextDocument(e => {
-    // childProcess.exec(
-    //   `cd ${vscode.workspace.rootPath} && git diff --numstat`,
-    //   (err, stdout) => {
-    //     const gitData = stdout.split('	');
+    return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
+      .then(res => {
+        const gitData = res.split('	');
+        const added = gitData[0];
+        const removed = gitData[1];
 
-    //     console.log(gitData[0].length);
-
-
-    //     if (gitData[0].length === 0) {
-    //       updateIndicatorsData(
-    //         gitIndicators,
-    //         {
-    //           added: 0,
-    //           removed: 0
-    //         }
-    //       )
-    //     } else {
-    //       updateIndicatorsData(
-    //       gitIndicators,
-    //         {
-    //           added: parseInt(gitData[0]),
-    //           removed: parseInt(gitData[1])
-    //         }
-    //       );
-    //     }
-    //   }
-    // )
+        updateIndicators(gitIndicators, {
+          added,
+          removed
+        });
+      });
   });
 }
 
@@ -79,37 +59,23 @@ export function deactivate() {
   gitIndicators.hide();
 }
 
-function updateIndicatorsData(
+function updateIndicators(
   indicators: vscode.StatusBarItem,
   data: IIndicatorsData
 ) {
-  const addedRegexp = /(\$\(diff-added\))\s*(\w*)/gm;
-  const removedRegexp = /(\$\(diff-removed\))\s*(\w*)/gm;
+  const { added, removed } = data;
   let updatedData = indicators.text;
+  let splittedData = indicators.text.split(' ');
 
-  console.log(addedCount, removedCount);
-
-
-  if (data.added && data.added !== addedCount) {
-    updatedData = updatedData.replace(addedRegexp, (match, r1) => {
-      addedCount = data.added;
-      return `${r1}   ${data.added}`;
-    });
+  if (added === 0 && removed === 0) {
+    indicators.color = null;
+  } else {
+    indicators.color = '#e2c08d';
   }
 
-  if (data.removed && data.removed !== removedCount) {
-    updatedData = updatedData.replace(removedRegexp, (match, r1) => {
-      removedCount = data.removed;
-      return `${r1}   ${data.removed}`;
-    });
-  }
+  splittedData[0] = `${splittedData[0]}`;
+  splittedData[1] = `+${data.added},`;
+  splittedData[2] = `-${data.removed}`;
 
-
-  indicators.text = updatedData;
-}
-
-class GitIndicators {
-  constructor(aligment: vscode.StatusBarAlignment) {
-    this.aligment = aligment;
-  }
+  indicators.text = splittedData.join(' ');
 }

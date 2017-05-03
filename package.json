@@ -35,5 +35,7 @@
     "typescript": "^2.0.3",
     "vscode": "^1.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "bluebird": "^3.5.0"
+  }
 }
