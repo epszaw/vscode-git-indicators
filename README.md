@@ -9,6 +9,10 @@ indicators in atom and want the same in vscode.
 
 ## Release Notes
 
+### 0.0.4
+
+Fix 'NaN' value in counters.
+
 ### 0.0.3
 
 Add documentation, icon and some code simplify.

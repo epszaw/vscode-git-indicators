@@ -87,8 +87,8 @@ function getGitData() {
       dataLines.map(line => {
         if (line.length > 0) {
           const parsedLine = line.split('	');
-          added += parseInt(parsedLine[0]);
-          removed += parseInt(parsedLine[1]);
+          added += parsedLine[0] !== '-' ? parseInt(parsedLine[0]) : 0;
+          removed += parsedLine[0] !== '-' ? parseInt(parsedLine[1]) : 0;
         }
       })
 
