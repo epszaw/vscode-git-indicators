@@ -9,6 +9,7 @@ const exec = Promise.promisify(childProcess.exec);
 let gitIndicators;
 let addedCount = 0;
 let removedCount = 0;
+let changeTimer;
 
 interface IGitIndicators {
   aligment: vscode.StatusBarAlignment
@@ -20,39 +21,31 @@ interface IIndicatorsData {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  // let test = vscode.commands.registerTextEditorCommand(
-  //   'git-indicators.sayHello',
-  //   () => vscode.window.showInformationMessage('Hello World!')
-  // );
-
-  // let test2 = vscode.commands.registerTextEditorCommand(
-  //   'git-indicators.test',
-  //   () => updateIndicatorsData(gitIndicators, {
-  //     added: 10,
-  //     removed: 50
-  //   })
-  // );
+  let toggleGitPanel = vscode.commands.registerTextEditorCommand(
+    'git-indicators.toggleGitPanel',
+    () => {
+      vscode.commands.executeCommand('workbench.view.git');
+    }
+  );
 
   gitIndicators = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left
   );
-  gitIndicators.command = 'workbench.view.git';
-  gitIndicators.text = `$(diff-modified) ${addedCount}, ${removedCount}`;
-  gitIndicators.show();
+  gitIndicators.command = 'git-indicators.toggleGitPanel';
+  gitIndicators.text = `$(diff-modified) +${addedCount}, -${removedCount}`;
 
-  vscode.workspace.onDidSaveTextDocument(e => {
-    return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
-      .then(res => {
-        const gitData = res.split('	');
-        const added = gitData[0];
-        const removed = gitData[1];
+  vscode.workspace.onDidChangeTextDocument(e => {
+    if (changeTimer) {
+      clearTimeout(changeTimer);
+      changeTimer = null;
+    }
 
-        updateIndicators(gitIndicators, {
-          added,
-          removed
-        });
-      });
-  });
+    changeTimer = setTimeout(() => {
+      return getGitData();
+    }, 250);
+  })
+
+  return getGitData().then(() => gitIndicators.show());
 }
 
 export function deactivate() {
@@ -78,4 +71,26 @@ function updateIndicators(
   splittedData[2] = `-${data.removed}`;
 
   indicators.text = splittedData.join(' ');
+}
+
+function getGitData() {
+  return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
+    .then(res => {
+      const dataLines = res.split('\n');
+      let added = 0;
+      let removed = 0;
+
+      dataLines.map(line => {
+        if (line.length > 0) {
+          const parsedLine = line.split('	');
+          added += parseInt(parsedLine[0]);
+          removed += parseInt(parsedLine[1]);
+        }
+      })
+
+      updateIndicators(gitIndicators, {
+        added,
+        removed
+      });
+    });
 }
