@@ -7,13 +7,9 @@ import * as Promise from 'bluebird';
 const exec = Promise.promisify(childProcess.exec);
 
 let gitIndicators;
+let changeTimer;
 let addedCount = 0;
 let removedCount = 0;
-let changeTimer;
-
-interface IGitIndicators {
-  aligment: vscode.StatusBarAlignment
-}
 
 interface IIndicatorsData {
   added?: number,
@@ -40,9 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
       changeTimer = null;
     }
 
-    changeTimer = setTimeout(() => {
-      return getGitData();
-    }, 250);
+    changeTimer = setTimeout(() => getGitData(), 50);
   })
 
   return getGitData().then(() => gitIndicators.show());
@@ -51,6 +45,12 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
   gitIndicators.hide();
 }
+
+/**
+ * Update indicators by data object
+ * @param indicators {vscode.StatusBarItem} - Indicators
+ * @param data {IIndicatorsData} - New data indicators
+ */
 
 function updateIndicators(
   indicators: vscode.StatusBarItem,
@@ -72,6 +72,10 @@ function updateIndicators(
 
   indicators.text = splittedData.join(' ');
 }
+
+/**
+ * Execute shell script to get diff data and update indicators
+ */
 
 function getGitData() {
   return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
