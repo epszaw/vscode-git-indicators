@@ -14,14 +14,6 @@
     "workspaceContains:.git"
   ],
   "main": "./out/src/extension",
-  "contributes": {
-    "commands": [
-      {
-        "command": "git-indicators.sayHello",
-        "title": "Hello World"
-      }
-    ]
-  },
   "scripts": {
     "vscode:prepublish": "tsc -p ./",
     "compile": "tsc -watch -p ./",
