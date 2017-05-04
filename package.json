@@ -1,9 +1,14 @@
 {
   "name": "git-indicators",
-  "displayName": "git-indicators",
-  "description": "",
-  "version": "0.0.1",
+  "displayName": "Git Indicators",
+  "description": "Atom like git counters",
+  "version": "0.0.2",
   "publisher": "lamartire",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lamartire/vscode-git-indicators"
+  },
+  "homepage": "https://github.com/lamartire/vscode-git-indicators",
   "engines": {
     "vscode": "^1.10.0"
   },
