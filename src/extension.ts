@@ -8,8 +8,6 @@ const exec = Promise.promisify(childProcess.exec);
 
 let gitIndicators;
 let changeTimer;
-let addedCount = 0;
-let removedCount = 0;
 
 interface IIndicatorsData {
   added?: number,
@@ -17,18 +15,25 @@ interface IIndicatorsData {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  let toggleGitPanel = vscode.commands.registerTextEditorCommand(
+  const toggleGitPanel = vscode.commands.registerTextEditorCommand(
     'git-indicators.toggleGitPanel',
     () => {
       vscode.commands.executeCommand('workbench.view.git');
     }
   );
-
-  gitIndicators = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left
+  const activateGitIndicators = vscode.commands.registerTextEditorCommand(
+    'git-indicators.initIndicators',
+    () => this.activate()
   );
-  gitIndicators.command = 'git-indicators.toggleGitPanel';
-  gitIndicators.text = `$(diff-modified) +${addedCount}, -${removedCount}`;
+  const updateGitIndicators = vscode.commands.registerTextEditorCommand(
+    'git-indicators.updateIndicators',
+    () => getGitData(gitIndicators)
+  );
+
+  gitIndicators = createIndicators(vscode.StatusBarAlignment.Left, {
+    added: 0,
+    removed: 0
+  });
 
   vscode.workspace.onDidChangeTextDocument(e => {
     if (changeTimer) {
@@ -36,14 +41,37 @@ export function activate(context: vscode.ExtensionContext) {
       changeTimer = null;
     }
 
-    changeTimer = setTimeout(() => getGitData(), 50);
+    changeTimer = setTimeout(() => getGitData(gitIndicators), 250);
   })
 
-  return getGitData().then(() => gitIndicators.show());
+  context.subscriptions.push(activateGitIndicators, updateGitIndicators);
+
+  return getGitData(gitIndicators).then(() => gitIndicators.show());
 }
 
 export function deactivate() {
   gitIndicators.hide();
+}
+
+
+/**
+ * Creates indicators status bar item
+ * @param {vscode.StatusBarAlignment} aligment
+ * @param {IIndicatorsData} initialData
+ * @returns {vscode.StatusBarItem} indicators
+ */
+
+function createIndicators(
+  aligment: vscode.StatusBarAlignment,
+  initialData: IIndicatorsData,
+): vscode.StatusBarItem {
+  const {added, removed} = initialData;
+  let indicators = vscode.window.createStatusBarItem(aligment);
+
+  indicators.command = 'git-indicators.toggleGitPanel';
+  indicators.text = `$(diff-modified) +${added}, -${removed}`;
+
+  return indicators;
 }
 
 /**
@@ -75,9 +103,13 @@ function updateIndicators(
 
 /**
  * Execute shell script to get diff data and update indicators
+ * @param {vscode.StatusBarItem} indicators
+ * @returns {Promise}
  */
 
-function getGitData() {
+function getGitData(
+  indicators: vscode.StatusBarItem
+): Promise {
   return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
     .then(res => {
       const dataLines = res.split('\n');
@@ -92,9 +124,19 @@ function getGitData() {
         }
       })
 
-      updateIndicators(gitIndicators, {
+      updateIndicators(indicators, {
         added,
         removed
       });
+    })
+    .catch(err => {
+      if (err.message.includes('Not a git repository')) {
+        vscode.window.showErrorMessage(
+          'Not a git repository! Init repository and restart extension.'
+        );
+        deactivate();
+      } else {
+        throw err;
+      }
     });
 }
