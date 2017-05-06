@@ -109,7 +109,7 @@ function updateIndicators(
 
 function getGitData(
   indicators: vscode.StatusBarItem
-): Promise {
+): Promise<String> {
   return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
     .then(res => {
       const dataLines = res.split('\n');
