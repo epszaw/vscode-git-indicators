@@ -1,5 +1,9 @@
 # Change Log
 
+### 0.0.6
+
+Fix endless error "Not a git repository..." in windows
+
 ### 0.0.5
 
 Add commands for update and init indicators manually.

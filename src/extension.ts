@@ -110,7 +110,13 @@ function updateIndicators(
 function getGitData(
   indicators: vscode.StatusBarItem
 ): Promise<String> {
-  return exec(`cd ${vscode.workspace.rootPath} && git diff --numstat`)
+  const workDir = vscode.workspace.rootPath;
+
+  return exec(
+    workDir[1] === ':'
+    ? `${workDir.slice(0, 2)} && cd ${workDir} && git diff --numstat`
+    : `cd ${workDir} && git diff --numstat`
+  )
     .then(res => {
       const dataLines = res.split('\n');
       let added = 0;
