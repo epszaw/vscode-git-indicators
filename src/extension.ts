@@ -35,13 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
     removed: 0
   });
 
-  vscode.workspace.onDidChangeTextDocument(e => {
-    if (changeTimer) {
-      clearTimeout(changeTimer);
-      changeTimer = null;
-    }
-
-    changeTimer = setTimeout(() => getGitData(gitIndicators), 250);
+  vscode.workspace.onDidSaveTextDocument(e => {
+    getGitData(gitIndicators);
   })
 
   context.subscriptions.push(activateGitIndicators, updateGitIndicators);
@@ -53,14 +48,12 @@ export function deactivate() {
   gitIndicators.hide();
 }
 
-
 /**
  * Creates indicators status bar item
  * @param {vscode.StatusBarAlignment} aligment
  * @param {IIndicatorsData} initialData
  * @returns {vscode.StatusBarItem} indicators
  */
-
 function createIndicators(
   aligment: vscode.StatusBarAlignment,
   initialData: IIndicatorsData,
@@ -75,38 +68,10 @@ function createIndicators(
 }
 
 /**
- * Update indicators by data object
- * @param indicators {vscode.StatusBarItem} - Indicators
- * @param data {IIndicatorsData} - New data indicators
- */
-
-function updateIndicators(
-  indicators: vscode.StatusBarItem,
-  data: IIndicatorsData
-) {
-  const { added, removed } = data;
-  let updatedData = indicators.text;
-  let splittedData = indicators.text.split(' ');
-
-  if (added === 0 && removed === 0) {
-    indicators.color = null;
-  } else {
-    indicators.color = '#e2c08d';
-  }
-
-  splittedData[0] = `${splittedData[0]}`;
-  splittedData[1] = `+${data.added},`;
-  splittedData[2] = `-${data.removed}`;
-
-  indicators.text = splittedData.join(' ');
-}
-
-/**
  * Execute shell script to get diff data and update indicators
  * @param {vscode.StatusBarItem} indicators
  * @returns {Promise}
  */
-
 function getGitData(
   indicators: vscode.StatusBarItem
 ): Promise<String> {
@@ -128,7 +93,7 @@ function getGitData(
           added += parsedLine[0] !== '-' ? parseInt(parsedLine[0]) : 0;
           removed += parsedLine[0] !== '-' ? parseInt(parsedLine[1]) : 0;
         }
-      })
+      });
 
       updateIndicators(indicators, {
         added,
@@ -145,4 +110,30 @@ function getGitData(
         throw err;
       }
     });
+}
+
+/**
+ * Update indicators by data object
+ * @param indicators {vscode.StatusBarItem} - Indicators
+ * @param data {IIndicatorsData} - New data indicators
+ */
+function updateIndicators(
+  indicators: vscode.StatusBarItem,
+  data: IIndicatorsData
+) {
+  const { added, removed } = data;
+  let updatedData = indicators.text;
+  let splittedData = indicators.text.split(' ');
+
+  if (added === 0 && removed === 0) {
+    indicators.color = null;
+  } else {
+    indicators.color = '#e2c08d';
+  }
+
+  splittedData[0] = `${splittedData[0]}`;
+  splittedData[1] = `+${data.added},`;
+  splittedData[2] = `-${data.removed}`;
+
+  indicators.text = splittedData.join(' ');
 }
