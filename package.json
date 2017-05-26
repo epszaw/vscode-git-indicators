@@ -21,10 +21,6 @@
       {
         "command": "git-indicators.initIndicators",
         "title": "Git indicators: activate"
-      },
-      {
-        "command": "git-indicators.updateIndicators",
-        "title": "Git indicators: update indicators data"
       }
     ]
   },

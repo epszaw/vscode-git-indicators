@@ -25,10 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
     'git-indicators.initIndicators',
     () => this.activate()
   );
-  const updateGitIndicators = vscode.commands.registerTextEditorCommand(
-    'git-indicators.updateIndicators',
-    () => getGitData(gitIndicators)
-  );
 
   gitIndicators = createIndicators(vscode.StatusBarAlignment.Left, {
     added: 0,
@@ -39,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
     getGitData(gitIndicators);
   })
 
-  context.subscriptions.push(activateGitIndicators, updateGitIndicators);
+  context.subscriptions.push(activateGitIndicators);
 
   return getGitData(gitIndicators).then(() => gitIndicators.show());
 }
@@ -125,15 +121,25 @@ function updateIndicators(
   let updatedData = indicators.text;
   let splittedData = indicators.text.split(' ');
 
-  if (added === 0 && removed === 0) {
-    indicators.color = null;
+  if (added && removed) {
+    splittedData = [
+      '$(diff-modified)',
+      `+${data.added},`,
+      `-${data.removed}`
+    ];
+  } else if (added && !removed) {
+    splittedData = [
+      '$(diff-added)',
+      `${data.added}`
+    ];
+  } else if (!added && removed) {
+    splittedData = [
+      '$(diff-removed)',
+      `${data.removed}`
+    ];
   } else {
-    indicators.color = '#e2c08d';
+    splittedData = [];
   }
-
-  splittedData[0] = `${splittedData[0]}`;
-  splittedData[1] = `+${data.added},`;
-  splittedData[2] = `-${data.removed}`;
 
   indicators.text = splittedData.join(' ');
 }
