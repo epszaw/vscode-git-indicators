@@ -1,5 +1,17 @@
 # Change Log
 
+### 1.0.0
+
+Removed colors from modified indicators.
+Now indicators have four states:
+
+* Invisible -- when your project has no any changes.
+* Plus -- show added or modified lines count.
+* Minus -- show removed lines count.
+* Modified -- show removed, modified and added lines count.
+
+Now extension works more stable!
+
 ### 0.0.6
 
 Fix endless error "Not a git repository..." in windows
