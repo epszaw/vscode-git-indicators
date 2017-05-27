@@ -11,8 +11,8 @@ let gitWatcher: vscode.FileSystemWatcher|null;
 let changeTimer;
 
 interface IIndicatorsData {
-  added?: number,
-  removed?: number
+  added?: Number,
+  removed?: Number
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -61,9 +61,9 @@ export function deactivate() {
 
 /**
  * Creates indicators status bar item
- * @param {vscode.StatusBarAlignment} aligment
- * @param {IIndicatorsData} initialData
- * @returns {vscode.StatusBarItem} indicators
+ * @param aligment
+ * @param initialData
+ * @return indicators
  */
 function createIndicators(
   aligment: vscode.StatusBarAlignment,
@@ -81,7 +81,7 @@ function createIndicators(
 /**
  * Request new indicators data and update indicators, when data were
  * successfully recieved
- * @param {vscode.StatusBarItem} indicators
+ * @param indicators
  */
 async function requestIndicatorUpdate(
   indicators: vscode.StatusBarItem
@@ -92,59 +92,73 @@ async function requestIndicatorUpdate(
   }
 
   changeTimer = setTimeout(async () => {
-    const indicatorsData = await getGitData();
+    const gitData = await getGitData();
+    const indicatorsData = parseGitData(gitData);
 
     updateIndicators(indicators, indicatorsData);
   }, 250);
 }
 
 /**
- * Execute shell script to get diff data and update indicators
- * @param {vscode.StatusBarItem} indicators
- * @returns {Promise}
+ * Collect git changes data
+ * @return dataLines
  */
-function getGitData(): Promise<String> {
+async function getGitData(): Promise<Array<String>> {
   const workDir = vscode.workspace.rootPath;
+  let dataLines;
+  let added: Number = 0;
+  let removed: Number = 0;
 
-  return exec(
-    workDir[1] === ':'
-    ? `${workDir.slice(0, 2)} && cd ${workDir} && git diff --numstat`
-    : `cd ${workDir} && git diff --numstat`
-  )
-    .then(res => {
-      const dataLines = res.split('\n');
-      let added = 0;
-      let removed = 0;
+  try {
+    const gitData = await exec(
+      workDir[1] === ':'
+      ? `${workDir.slice(0, 2)} && cd ${workDir} && git diff --numstat`
+      : `cd ${workDir} && git diff --numstat`
+    );
 
-      dataLines.map(line => {
-        if (line.length > 0) {
-          const parsedLine = line.split('	');
-          added += parsedLine[0] !== '-' ? parseInt(parsedLine[0]) : 0;
-          removed += parsedLine[0] !== '-' ? parseInt(parsedLine[1]) : 0;
-        }
-      });
+    return dataLines = gitData.split('\n');
+  } catch (err) {
+    if (err.message.includes('Not a git repository')) {
+      vscode.window.showErrorMessage(
+        'Not a git repository! Init repository and restart extension.'
+      );
+      deactivate();
+    } else {
+      throw err;
+    }
+  }
+}
 
-      return {
-        added,
-        removed
-      }
-    })
-    .catch(err => {
-      if (err.message.includes('Not a git repository')) {
-        vscode.window.showErrorMessage(
-          'Not a git repository! Init repository and restart extension.'
-        );
-        deactivate();
-      } else {
-        throw err;
-      }
-    });
+/**
+ * Parse git data-array and return added, modified and removed lines count
+ * @param rawGitDataLines
+ */
+function parseGitData(rawGitDataLines: Array<String>): { added: Number, removed: Number } {
+  let added: Number = 0;
+  let removed: Number = 0;
+
+  rawGitDataLines.map(line => {
+    if (line.length > 0) {
+      const parsedLine = line.split('	');
+      added = added + parsedLine[0] !== '-'
+        ? parseInt(parsedLine[0])
+        : 0;
+      removed = removed + parsedLine[0] !== '-'
+        ? parseInt(parsedLine[1])
+        : 0;
+    }
+  });
+
+  return {
+    added,
+    removed
+  }
 }
 
 /**
  * Update indicators by data object
- * @param indicators {vscode.StatusBarItem} - Indicators
- * @param data {IIndicatorsData} - New data indicators
+ * @param indicators
+ * @param data
  */
 function updateIndicators(
   indicators: vscode.StatusBarItem,
