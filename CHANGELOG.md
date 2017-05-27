@@ -1,5 +1,13 @@
 # Change Log
 
+### 1.0.2
+
+Fix indicators "freezing" after git actions (commits, pushes and etc.).
+
+### 1.0.1
+
+Add demo animation
+
 ### 1.0.0
 
 Removed colors from modified indicators.
