@@ -95,7 +95,7 @@ async function requestIndicatorUpdate(
     const indicatorsData = await getGitData();
 
     updateIndicators(indicators, indicatorsData);
-  }, 500);
+  }, 250);
 }
 
 /**
