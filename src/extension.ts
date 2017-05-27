@@ -2,11 +2,12 @@
 
 import * as vscode from 'vscode';
 import * as childProcess from 'child_process';
-import * as Promise from 'bluebird';
+import * as BluebirdPromise from 'bluebird';
 
-const exec = Promise.promisify(childProcess.exec);
+const exec = BluebirdPromise.promisify(childProcess.exec);
 
-let gitIndicators;
+let gitIndicators: vscode.StatusBarItem;
+let gitWatcher: vscode.FileSystemWatcher|null;
 let changeTimer;
 
 interface IIndicatorsData {
@@ -25,6 +26,19 @@ export function activate(context: vscode.ExtensionContext) {
     'git-indicators.initIndicators',
     () => this.activate()
   );
+  gitWatcher = vscode.workspace.createFileSystemWatcher('**/.git/**');
+
+  gitWatcher.onDidChange(e => {
+    return requestIndicatorUpdate(gitIndicators);
+  });
+
+  gitWatcher.onDidCreate(e => {
+    return requestIndicatorUpdate(gitIndicators);
+  });
+
+  gitWatcher.onDidDelete(e => {
+    return requestIndicatorUpdate(gitIndicators);
+  });
 
   gitIndicators = createIndicators(vscode.StatusBarAlignment.Left, {
     added: 0,
@@ -32,15 +46,16 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   vscode.workspace.onDidSaveTextDocument(e => {
-    getGitData(gitIndicators);
-  })
+    return requestIndicatorUpdate(gitIndicators);
+  });
 
   context.subscriptions.push(activateGitIndicators);
 
-  return getGitData(gitIndicators).then(() => gitIndicators.show());
+  gitIndicators.show();
 }
 
 export function deactivate() {
+  gitWatcher = null;
   gitIndicators.hide();
 }
 
@@ -64,13 +79,31 @@ function createIndicators(
 }
 
 /**
+ * Request new indicators data and update indicators, when data were
+ * successfully recieved
+ * @param {vscode.StatusBarItem} indicators
+ */
+async function requestIndicatorUpdate(
+  indicators: vscode.StatusBarItem
+) {
+  if (changeTimer) {
+    clearTimeout(changeTimer);
+    changeTimer = null;
+  }
+
+  changeTimer = setTimeout(async () => {
+    const indicatorsData = await getGitData();
+
+    updateIndicators(indicators, indicatorsData);
+  }, 500);
+}
+
+/**
  * Execute shell script to get diff data and update indicators
  * @param {vscode.StatusBarItem} indicators
  * @returns {Promise}
  */
-function getGitData(
-  indicators: vscode.StatusBarItem
-): Promise<String> {
+function getGitData(): Promise<String> {
   const workDir = vscode.workspace.rootPath;
 
   return exec(
@@ -91,10 +124,10 @@ function getGitData(
         }
       });
 
-      updateIndicators(indicators, {
+      return {
         added,
         removed
-      });
+      }
     })
     .catch(err => {
       if (err.message.includes('Not a git repository')) {

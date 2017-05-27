@@ -2,7 +2,7 @@
   "name": "git-indicators",
   "displayName": "Git Indicators",
   "description": "Atom like git counters",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "publisher": "lamartire",
   "repository": {
     "type": "git",
