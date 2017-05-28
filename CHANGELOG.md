@@ -1,5 +1,9 @@
 # Change Log
 
+### 1.1.0
+
+Change structure of extension. Now it solid class with methods.
+
 ### 1.0.2
 
 Fix indicators "freezing" after git actions (commits, pushes and etc.).
