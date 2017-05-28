@@ -1,11 +1,13 @@
 sudo: false
 
-os:
-  - osx
-  - linux
+language: node_js
 
 node_js:
   - v7
+
+os:
+  - osx
+  - linux
 
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
