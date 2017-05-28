@@ -23,7 +23,7 @@ interface IIndicators {
   updateIndicators(data: IIndicatorsData)
 }
 
-class Indicators implements IIndicators {
+export default class Indicators implements IIndicators {
   indicators = null
   watcher = null
   changeTimer = null
@@ -32,7 +32,7 @@ class Indicators implements IIndicators {
    * Main activation method
    * @param context - vscode context
    */
-  activate (context) {
+  activate(context?) {
     const toggleGitPanel = vscode.commands.registerTextEditorCommand(
     'git-indicators.toggleGitPanel',
       () => {
@@ -41,7 +41,7 @@ class Indicators implements IIndicators {
     )
     const activateGitIndicators = vscode.commands.registerTextEditorCommand(
       'git-indicators.initIndicators',
-      () => this.activate(context)
+      () => context && this.activate(context)
     )
     this.watcher = vscode.workspace.createFileSystemWatcher('**/.git/**')
 
@@ -66,15 +66,25 @@ class Indicators implements IIndicators {
       return this.requestIndicatorsUpdate()
     })
 
-    context.subscriptions.push(activateGitIndicators)
+    if (context) {
+      context.subscriptions.push(activateGitIndicators)
+    }
 
     this.indicators.show()
   }
 
   /**
+   * Common deactivate method
+   */
+  deactivate() {
+    this.watcher = null
+    this.indicators.hide()
+  }
+
+  /**
    * Get working project git data
    */
-  async requestGitData () {
+  async requestGitData() {
     const workDir = vscode.workspace.rootPath
     let dataLines
     let added: Number = 0
@@ -103,7 +113,7 @@ class Indicators implements IIndicators {
   /**
    * Request indicators update: get git data and update indicators text
    */
-  async requestIndicatorsUpdate () {
+  async requestIndicatorsUpdate() {
     if (this.changeTimer) {
       clearTimeout(this.changeTimer)
       this.changeTimer = null
@@ -153,17 +163,19 @@ class Indicators implements IIndicators {
    * Prepare raw git data to special object
    * @param rawGitDataLines - Raw git diff output
    */
-  parseGitData (rawGitDataLines) {
-    let added: Number = 0
-    let removed: Number = 0
+  parseGitData(rawGitDataLines) {
+    // TODO: add types to added and removed
+    let added = 0
+    let removed = 0
 
     rawGitDataLines.map(line => {
       if (line.length > 0) {
         const parsedLine = line.split('	')
-        added = added + parsedLine[0] !== '-'
+
+        added += parsedLine[0] !== '-'
           ? parseInt(parsedLine[0], 10)
           : 0
-        removed = removed + parsedLine[0] !== '-'
+        removed += parsedLine[0] !== '-'
           ? parseInt(parsedLine[1], 10)
           : 0
       }
@@ -176,19 +188,11 @@ class Indicators implements IIndicators {
   }
 
   /**
-   * Common deactivate method
-   */
-  deactivate () {
-    this.watcher = null
-    this.indicators.hide()
-  }
-
-  /**
    * Create indicators instance
    * @param aligment - Aligment of indicators on status panel
    * @param initialData  - Initial indicators data
    */
-  create (aligment, initialData) {
+  create(aligment, initialData) {
     const {added, removed} = initialData
     let indicators = vscode.window.createStatusBarItem(aligment)
 
@@ -198,5 +202,3 @@ class Indicators implements IIndicators {
     return indicators
   }
 }
-
-export default Indicators
