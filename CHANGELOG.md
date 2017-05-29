@@ -1,5 +1,9 @@
 # Change Log
 
+### 1.1.1
+
+Hide indicators without data.
+
 ### 1.1.0
 
 Change structure of extension. Now it solid class with methods.

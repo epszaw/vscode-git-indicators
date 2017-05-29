@@ -156,7 +156,12 @@ export default class Indicators implements IIndicators {
       splittedData = []
     }
 
-    this.indicators.text = splittedData.join(' ')
+    if (splittedData.length) {
+      this.indicators.show()
+      this.indicators.text = splittedData.join(' ')
+    } else {
+      this.indicators.hide()
+    }
   }
 
   /**
@@ -194,7 +199,7 @@ export default class Indicators implements IIndicators {
    */
   create(aligment, initialData) {
     const {added, removed} = initialData
-    let indicators = vscode.window.createStatusBarItem(aligment)
+    let indicators = vscode.window.createStatusBarItem(aligment, 10)
 
     indicators.command = 'git-indicators.toggleGitPanel'
     indicators.text = `$(diff-modified) +${added}, -${removed}`
