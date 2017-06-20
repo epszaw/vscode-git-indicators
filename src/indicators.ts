@@ -36,7 +36,7 @@ export default class Indicators implements IIndicators {
     const toggleGitPanel = vscode.commands.registerTextEditorCommand(
     'git-indicators.toggleGitPanel',
       () => {
-        vscode.commands.executeCommand('workbench.view.git')
+        vscode.commands.executeCommand('workbench.view.scm')
       }
     )
     const activateGitIndicators = vscode.commands.registerTextEditorCommand(
@@ -124,7 +124,7 @@ export default class Indicators implements IIndicators {
       const indicatorsData = this.parseGitData(gitData)
 
       this.updateIndicators(indicatorsData)
-    }, 250)
+    }, 100)
   }
 
   /**
