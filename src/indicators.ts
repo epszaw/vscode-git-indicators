@@ -7,26 +7,26 @@ import * as BluebirdPromise from 'bluebird'
 const exec = BluebirdPromise.promisify(childProcess.exec)
 
 interface IIndicatorsData {
-  added: Number
-  removed: Number
+  added: number
+  removed: number
 }
 
 interface IIndicators {
   indicators: vscode.StatusBarItem|null
-  watcher: vscode.FileSystemWatcher|null
+  fsWatcher: vscode.FileSystemWatcher|null
   changeTimer: any
   activate(context?: vscode.ExtensionContext)
-  create(aligment: vscode.StatusBarAlignment, initialData: IIndicatorsData, initialFilesCount: Number)
-  requestChangesData(): Promise<Array<String>>
-  requestChangesFilesCount(): Promise<Number>
-  parseGitData(rawGitDataLines: Array<String>): IIndicatorsData
+  create(aligment: vscode.StatusBarAlignment, initialData: IIndicatorsData, initialFilesCount: number)
+  requestChangesData(): Promise<Array<string>>
+  requestChangesFilesCount(): Promise<number>
+  parseGitData(rawGitDataLines: Array<string>): IIndicatorsData
   requestIndicatorsUpdate()
-  updateIndicators(data: IIndicatorsData, filesCount: Number)
+  updateIndicators(data: IIndicatorsData, filesCount: number)
 }
 
 export default class Indicators implements IIndicators {
   indicators = null
-  watcher = null
+  fsWatcher = null
   changeTimer = null
 
   /**
@@ -44,19 +44,13 @@ export default class Indicators implements IIndicators {
       'git-indicators.initIndicators',
       () => context && this.activate(context)
     )
-    this.watcher = vscode.workspace.createFileSystemWatcher('**/.git/**')
 
-    this.watcher.onDidChange(e => {
-      return this.requestIndicatorsUpdate()
-    })
-
-    this.watcher.onDidCreate(e => {
-      return this.requestIndicatorsUpdate()
-    })
-
-    this.watcher.onDidDelete(e => {
-      return this.requestIndicatorsUpdate()
-    })
+    this.fsWatcher = vscode.workspace.createFileSystemWatcher(
+      `${vscode.workspace.rootPath}/**/*`
+    )
+    this.fsWatcher.onDidCreate(() => this.requestIndicatorsUpdate())
+    this.fsWatcher.onDidChange(() => this.requestIndicatorsUpdate())
+    this.fsWatcher.onDidDelete(() => this.requestIndicatorsUpdate())
 
     this.indicators = this.create(
       vscode.StatusBarAlignment.Left,
@@ -82,7 +76,7 @@ export default class Indicators implements IIndicators {
    * Common deactivate method
    */
   deactivate () {
-    this.watcher = null
+    this.fsWatcher = null
     this.indicators.hide()
   }
 
@@ -91,14 +85,14 @@ export default class Indicators implements IIndicators {
    */
   async requestChangesData () {
     const workDir = vscode.workspace.rootPath
-    let added: Number = 0
-    let removed: Number = 0
+    let added: number = 0
+    let removed: number = 0
 
     try {
       const gitData = await exec(
         workDir[1] === ':'
-        ? `${workDir.slice(0, 2)} && cd ${workDir} && git diff --numstat`
-        : `cd ${workDir} && git diff --numstat`
+          ? `${workDir.slice(0, 2)} && cd ${workDir} && git diff --numstat`
+          : `cd ${workDir} && git diff --numstat`
       )
 
       return gitData.split('\n')
@@ -123,8 +117,8 @@ export default class Indicators implements IIndicators {
     try {
       const filesCount = await exec(
         workDir[1] === ':'
-        ? `${workDir.slice(0, 2)} && cd ${workDir} && git status --porcelain | wc -l`
-        : `cd ${workDir} && git status --porcelain | wc -l`
+          ? `${workDir.slice(0, 2)} && cd ${workDir} && git status -s | wc -l`
+          : `cd ${workDir} && git status -s | wc -l`
       )
 
       return parseInt(filesCount)
@@ -164,32 +158,27 @@ export default class Indicators implements IIndicators {
    */
   updateIndicators (changesData, filesCount) {
     const { added, removed } = changesData
-    let newData: Array<String|Number> = []
+    let newData: Array<string|number> = []
+    // TODO: Add types to source
+    let source = []
+    let bothIndicators: Boolean = false
 
     if (filesCount) {
       newData = [
-        `$(diff) ${filesCount}  `
+        `$(diff) ${filesCount}`
       ]
     }
 
-    if (added && removed) {
-      newData = newData.concat([
-        '$(diff-modified)',
-        `+${changesData.added},`,
-        `-${changesData.removed}`
-      ])
-    } else if (added && !removed) {
-      newData = newData.concat([
-        '$(diff-added)',
-        `${changesData.added}`
-      ])
-    } else if (!added && removed) {
-      newData = newData.concat([
-        '$(diff-removed)',
-        `${changesData.removed}`
-      ])
-    } else {
-      newData = []
+    if (added || removed) {
+      if (added && removed) {
+        source = ['$(diff-modified)', `+${added},`, `-${removed}`]
+      } else if (added && !removed) {
+        source = ['$(diff-added)', `${added}`]
+      } else if (!added && removed) {
+        source = ['$(diff-removed)', `${removed}`]
+      }
+
+      newData = newData.concat(newData.length ? ['  '].concat(source) : source)
     }
 
     if (newData.length) {
@@ -206,8 +195,8 @@ export default class Indicators implements IIndicators {
    */
   parseGitData (rawGitDataLines) {
     // TODO: add types to added and removed
-    let added = 0
-    let removed = 0
+    let added: number = 0
+    let removed: number = 0
 
     rawGitDataLines.map(line => {
       if (line.length > 0) {
