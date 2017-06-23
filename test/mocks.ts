@@ -1,5 +1,5 @@
 const mocks = {
-  defaultIndicatorsText: '$(diff-modified) +0, -0',
+  defaultIndicatorsText: '$(diff) 0 $(diff-modified) +0, -0',
   dataObjectWithAddedValue: {
     added: 10,
     removed: 0

@@ -13,7 +13,8 @@ suite('Git indicators common functional:', () => {
       {
         added: 0,
         removed: 0
-      }
+      },
+      0
     )
 
     assert.equal(
@@ -42,12 +43,12 @@ suite('Git indicators common functional:', () => {
     )
   })
 
-  test('indicators updates with raw git data', () => {
+  test('indicators updates with raw git data and 5 changed files', () => {
     const indicators = new Indicators()
     const parsedGitData = indicators.parseGitData(mocks.rawGitData)
 
     indicators.activate()
-    indicators.updateIndicators(parsedGitData)
+    indicators.updateIndicators(parsedGitData, 5)
 
     assert.notEqual(
       indicators.indicators.text,
