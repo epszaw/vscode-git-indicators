@@ -1,5 +1,10 @@
 # Change Log
 
+### 1.2.0
+
+Now indicators have counter of files, like original counter on action bar.
+Stability changes.
+
 ### 1.1.1
 
 Hide indicators without data.
