@@ -61,15 +61,9 @@ export default class Indicators implements IIndicators {
       0
     )
 
-    vscode.workspace.onDidSaveTextDocument(e => {
-      return this.requestIndicatorsUpdate()
-    })
-
     if (context) {
       context.subscriptions.push(activateGitIndicators)
     }
-
-    this.indicators.show()
   }
 
   /**
@@ -117,11 +111,11 @@ export default class Indicators implements IIndicators {
     try {
       const filesCount = await exec(
         workDir[1] === ':'
-          ? `${workDir.slice(0, 2)} && cd ${workDir} && git status -s | wc -l`
-          : `cd ${workDir} && git status -s | wc -l`
+          ? `${workDir.slice(0, 2)} && cd ${workDir} && git status -s`
+          : `cd ${workDir} && git status -s`
       )
 
-      return parseInt(filesCount)
+      return filesCount.split('\n').length - 1
     } catch (err) {
       if (err.message.includes('Not a git repository')) {
         vscode.window.showErrorMessage(
