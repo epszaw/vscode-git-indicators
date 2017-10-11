@@ -1,5 +1,9 @@
 # Change Log
 
+### 1.2.1 - 1.2.3
+
+Small changes in `README.md`.
+
 ### 1.2.0
 
 Now indicators have counter of files, like original counter on action bar.
