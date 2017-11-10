@@ -3,24 +3,8 @@
 import * as vscode from 'vscode'
 import * as childProcess from 'child_process'
 import exec from './lib/exec'
-
-interface IIndicatorsData {
-  added: number
-  removed: number
-}
-
-interface IIndicators {
-  indicators: vscode.StatusBarItem|null
-  fsWatcher: vscode.FileSystemWatcher|null
-  changeTimer: any
-  activate(context?: vscode.ExtensionContext)
-  create(aligment: vscode.StatusBarAlignment, initialData: IIndicatorsData, initialFilesCount: number)
-  requestChangesData(): Promise<Array<string>>
-  requestChangesFilesCount(): Promise<number>
-  parseGitData(rawGitDataLines: Array<string>): IIndicatorsData
-  requestIndicatorsUpdate()
-  updateIndicators(data: IIndicatorsData, filesCount: number)
-}
+import IIndicators from './types/IIndicators'
+import IIndicatorsData from './types/IIndicatorsData'
 
 export default class Indicators implements IIndicators {
   indicators = null
@@ -141,7 +125,7 @@ export default class Indicators implements IIndicators {
       const parsedChangesData = this.parseGitData(gitChangesData)
 
       this.updateIndicators(parsedChangesData, gitChangedFilesCount)
-    }, 100)
+    }, 150)
   }
 
   /**
@@ -151,8 +135,7 @@ export default class Indicators implements IIndicators {
   updateIndicators (changesData, filesCount) {
     const { added, removed } = changesData
     let newData: Array<string|number> = []
-    // TODO: Add types to source
-    let source = []
+    let source: Array<string> = []
     let bothIndicators: Boolean = false
 
     if (filesCount) {
@@ -186,7 +169,6 @@ export default class Indicators implements IIndicators {
    * @param rawGitDataLines - Raw git diff output
    */
   parseGitData (rawGitDataLines) {
-    // TODO: add types to added and removed
     let added: number = 0
     let removed: number = 0
 
@@ -216,7 +198,7 @@ export default class Indicators implements IIndicators {
    * @param initialFilesCount - Initial changed files count
    */
   create (aligment, initialChangesData, initialFilesCount) {
-    const {added, removed} = initialChangesData
+    const { added, removed } = initialChangesData
     let indicators = vscode.window.createStatusBarItem(aligment, 10)
 
     indicators.command = 'git-indicators.toggleGitPanel'

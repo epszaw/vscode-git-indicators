@@ -1,5 +1,9 @@
 # Change Log
 
+### 1.2.5
+
+Some fixes in architecture
+
 ### 1.2.4
 
 Remove bluebird
