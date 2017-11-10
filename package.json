@@ -2,7 +2,7 @@
   "name": "git-indicators",
   "displayName": "Git Indicators",
   "description": "Atom like git counters",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "publisher": "lamartire",
   "repository": {
     "type": "git",
@@ -35,15 +35,12 @@
     "test": "node ./node_modules/vscode/bin/test"
   },
   "devDependencies": {
-    "@types/mocha": "^2.2.32",
-    "@types/node": "^6.0.40",
-    "mocha": "^2.3.3",
-    "tslint": "^5.3.2",
-    "tslint-config-standard": "^5.0.2",
-    "typescript": "^2.0.3",
-    "vscode": "^1.0.0"
-  },
-  "dependencies": {
-    "bluebird": "^3.5.0"
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^8.0.50",
+    "mocha": "^4.0.1",
+    "tslint": "^5.8.0",
+    "tslint-config-standard": "^7.0.0",
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.6"
   }
 }

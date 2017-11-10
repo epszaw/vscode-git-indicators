@@ -2,9 +2,7 @@
 
 import * as vscode from 'vscode'
 import * as childProcess from 'child_process'
-import * as BluebirdPromise from 'bluebird'
-
-const exec = BluebirdPromise.promisify(childProcess.exec)
+import exec from './lib/exec'
 
 interface IIndicatorsData {
   added: number

@@ -1,5 +1,9 @@
 # Change Log
 
+### 1.2.4
+
+Remove bluebird
+
 ### 1.2.1 - 1.2.3
 
 Small changes in `README.md`.
