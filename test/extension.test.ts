@@ -1,5 +1,3 @@
-'use strict'
-
 import * as assert from 'assert'
 import * as vscode from 'vscode'
 import Indicators from './../src/indicators'
@@ -22,11 +20,7 @@ suite('Git indicators common functional:', () => {
       mocks.defaultIndicatorsText,
       'Created indicators text is not equals to default text'
     )
-    assert.equal(
-      gitIndicators.alignment,
-      1,
-      'Created indicators hasn\'t Left aligment'
-    )
+    assert.equal(gitIndicators.alignment, 1, "Created indicators hasn't Left aligment")
   })
 
   test('raw git data is correctly parsed', () => {
@@ -53,7 +47,7 @@ suite('Git indicators common functional:', () => {
     assert.notEqual(
       indicators.indicators.text,
       mocks.defaultIndicatorsText,
-      'Text of indicators doesn\'t changed'
+      "Text of indicators doesn't changed"
     )
   })
 })

@@ -1,12 +1,10 @@
-'use strict'
-
 import * as vscode from 'vscode'
 import Indicators from './indicators'
 
 let indicators = new Indicators()
 
 interface IIndicatorsData {
-  added?: Number,
+  added?: Number
   removed?: Number
 }
 

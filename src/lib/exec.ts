@@ -1,8 +1,6 @@
-'use strict'
-
 import * as childProcess from 'child_process'
 
-function exec (command: string): Promise<any> {
+function exec(command: string): Promise<any> {
   return new Promise((resolve, reject) => {
     childProcess.exec(command, (err, res) => {
       if (!err) {

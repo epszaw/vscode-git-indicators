@@ -8,11 +8,7 @@ const mocks = {
     added: 0,
     removed: 10
   },
-  rawGitData: [
-    '1	4	src/indicators.ts',
-    '2	5	test/extension.test.ts',
-    '-	-	test/index.ts'
-  ]
+  rawGitData: ['1	4	src/indicators.ts', '2	5	test/extension.test.ts', '-	-	test/index.ts']
 }
 
 export default mocks
