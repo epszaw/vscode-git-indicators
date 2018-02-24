@@ -1,5 +1,9 @@
 # Change Log
 
+### 2.0.0
+
+Full extension redesign. Remove files counter (will be added later) for more stability.
+
 ### 1.2.5
 
 Some fixes in architecture

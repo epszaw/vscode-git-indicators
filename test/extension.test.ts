@@ -22,32 +22,4 @@ suite('Git indicators common functional:', () => {
     )
     assert.equal(gitIndicators.alignment, 1, "Created indicators hasn't Left aligment")
   })
-
-  test('raw git data is correctly parsed', () => {
-    const indicators = new Indicators()
-    const parsedGitData = indicators.parseGitData(mocks.rawGitData)
-
-    assert.deepEqual(
-      parsedGitData,
-      {
-        added: 3,
-        removed: 9
-      },
-      'Raw git data is not correctly parsed'
-    )
-  })
-
-  test('indicators updates with raw git data and 5 changed files', () => {
-    const indicators = new Indicators()
-    const parsedGitData = indicators.parseGitData(mocks.rawGitData)
-
-    indicators.activate()
-    indicators.updateIndicators(parsedGitData, 5)
-
-    assert.notEqual(
-      indicators.indicators.text,
-      mocks.defaultIndicatorsText,
-      "Text of indicators doesn't changed"
-    )
-  })
 })

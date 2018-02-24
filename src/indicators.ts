@@ -1,37 +1,30 @@
-import * as vscode from 'vscode'
-import exec from './lib/exec'
-import {debounce} from 'throttle-debounce'
-import IIndicators from './interfaces/IIndicators'
-import IIndicatorsData from './interfaces/IIndicatorsData'
+import { workspace, commands, window, StatusBarAlignment } from 'vscode'
+import { debounce } from 'throttle-debounce'
+import { GitDiffReader } from './lib/gitDiffReader'
+
+import { IIndicators, IIndicatorsData } from './interfaces'
 
 export default class Indicators implements IIndicators {
   indicators = null
   fsWatcher = null
-  changeTimer = null
+  reader = null
 
-  /**
-   * Main activation method
-   * @param context - vscode context
-   */
   activate(context?) {
-    const toggleGitPanel = vscode.commands.registerTextEditorCommand(
+    const workDir = workspace.rootPath
+    const fsWatcher = workspace.createFileSystemWatcher(`${workspace.rootPath}/**/*`)
+    const toggleGitPanel = commands.registerTextEditorCommand(
       'git-indicators.toggleGitPanel',
       () => {
-        vscode.commands.executeCommand('workbench.view.scm')
+        commands.executeCommand('workbench.view.scm')
       }
     )
-    const activateGitIndicators = vscode.commands.registerTextEditorCommand(
+    const activateGitIndicators = commands.registerTextEditorCommand(
       'git-indicators.initIndicators',
       () => context && this.activate(context)
     )
 
-    this.fsWatcher = vscode.workspace.createFileSystemWatcher(`${vscode.workspace.rootPath}/**/*`)
-    this.fsWatcher.onDidCreate(debounce(250, () => this.requestIndicatorsUpdate()))
-    this.fsWatcher.onDidChange(debounce(250, () => this.requestIndicatorsUpdate()))
-    this.fsWatcher.onDidDelete(debounce(250, () => this.requestIndicatorsUpdate()))
-
     this.indicators = this.create(
-      vscode.StatusBarAlignment.Left,
+      StatusBarAlignment.Left,
       {
         added: 0,
         removed: 0
@@ -39,161 +32,55 @@ export default class Indicators implements IIndicators {
       0
     )
 
+    if (!this.reader) {
+      this.reader = new GitDiffReader(workDir, fsWatcher)
+      this.reader.on('data', this.handleReaderData.bind(this))
+    }
+
     if (context) {
       context.subscriptions.push(activateGitIndicators)
     }
   }
 
-  /**
-   * Common deactivate method
-   */
+  create(aligment, initialChangesData, initialFilesCount) {
+    const { added, removed } = initialChangesData
+    let indicators = window.createStatusBarItem(aligment, 10)
+
+    indicators.command = 'git-indicators.toggleGitPanel'
+    indicators.text = ''
+
+    return indicators
+  }
+
   deactivate() {
+    this.reader.removeListener('data', this.handleReaderData)
     this.fsWatcher = null
     this.indicators.hide()
   }
 
-  /**
-   * Get working project changes data
-   */
-  async requestChangesData() {
-    const workDir = vscode.workspace.rootPath
-    let added: number = 0
-    let removed: number = 0
+  handleReaderData(data: IIndicatorsData) {
+    const { added, removed } = data
 
-    try {
-      const gitData = await exec(
-        workDir[1] === ':'
-          ? `${workDir.slice(0, 2)} && cd ${workDir} && git diff --numstat`
-          : `cd ${workDir} && git diff --numstat`
-      )
-
-      return gitData.split('\n')
-    } catch (err) {
-      if (err.message.includes('Not a git repository')) {
-        vscode.window.showErrorMessage(
-          'Not a git repository! Init repository and restart extension.'
-        )
-        this.deactivate()
-      } else {
-        throw err
-      }
-    }
+    this.updateIndicators(added, removed)
   }
 
-  /**
-   * Get working project changed files count
-   */
-  async requestChangesFilesCount() {
-    const workDir = vscode.workspace.rootPath
+  updateIndicators(added, removed) {
+    const source: string[] = []
 
-    try {
-      const filesCount = await exec(
-        workDir[1] === ':'
-          ? `${workDir.slice(0, 2)} && cd ${workDir} && git status -s`
-          : `cd ${workDir} && git status -s`
-      )
-
-      return filesCount.split('\n').length - 1
-    } catch (err) {
-      if (err.message.includes('Not a git repository')) {
-        vscode.window.showErrorMessage(
-          'Not a git repository! Init repository and restart extension.'
-        )
-        this.deactivate()
-      } else {
-        throw err
-      }
-    }
-  }
-
-  /**
-   * Request indicators update: get git data and update indicators text
-   */
-  async requestIndicatorsUpdate() {
-    if (this.changeTimer) {
-      clearTimeout(this.changeTimer)
-      this.changeTimer = null
+    if (added && removed) {
+      source.push(`$(diff-modified) +${added}, -${removed}`)
+    } else if (added) {
+      source.push(`$(diff-added) ${added}`)
+    } else if (removed) {
+      source.push(`$(diff-removed) ${removed}`)
     }
 
-    this.changeTimer = setTimeout(async () => {
-      const gitChangesData = await this.requestChangesData()
-      const gitChangedFilesCount = await this.requestChangesFilesCount()
-      const parsedChangesData = this.parseGitData(gitChangesData)
-
-      this.updateIndicators(parsedChangesData, gitChangedFilesCount)
-    }, 150)
-  }
-
-  /**
-   * Update indicators text
-   * @param data - New indicators data
-   */
-  updateIndicators(changesData, filesCount) {
-    const {added, removed} = changesData
-    let newData: Array<string | number> = []
-    let source: Array<string> = []
-    let bothIndicators: Boolean = false
-
-    if (filesCount) {
-      newData = [`$(diff) ${filesCount}`]
-    }
-
-    if (added || removed) {
-      if (added && removed) {
-        source = ['$(diff-modified)', `+${added},`, `-${removed}`]
-      } else if (added && !removed) {
-        source = ['$(diff-added)', `${added}`]
-      } else if (!added && removed) {
-        source = ['$(diff-removed)', `${removed}`]
-      }
-
-      newData = newData.concat(newData.length ? ['  '].concat(source) : source)
-    }
-
-    if (newData.length) {
+    if (source.length > 0) {
+      this.indicators.text = source.join('  ')
       this.indicators.show()
-      this.indicators.text = newData.join(' ')
     } else {
       this.indicators.hide()
+      this.indicators.text = ''
     }
-  }
-
-  /**
-   * Prepare raw git data to special object
-   * @param rawGitDataLines - Raw git diff output
-   */
-  parseGitData(rawGitDataLines) {
-    let added: number = 0
-    let removed: number = 0
-
-    rawGitDataLines.map(line => {
-      if (line.length > 0) {
-        const parsedLine = line.split('	')
-
-        added += parsedLine[0] !== '-' ? parseInt(parsedLine[0], 10) : 0
-        removed += parsedLine[0] !== '-' ? parseInt(parsedLine[1], 10) : 0
-      }
-    })
-
-    return {
-      added,
-      removed
-    }
-  }
-
-  /**
-   * Create indicators instance
-   * @param aligment - Aligment of indicators on status panel
-   * @param initialData  - Initial indicators data
-   * @param initialFilesCount - Initial changed files count
-   */
-  create(aligment, initialChangesData, initialFilesCount) {
-    const {added, removed} = initialChangesData
-    let indicators = vscode.window.createStatusBarItem(aligment, 10)
-
-    indicators.command = 'git-indicators.toggleGitPanel'
-    indicators.text = `$(diff) ${initialFilesCount} $(diff-modified) +${added}, -${removed}`
-
-    return indicators
   }
 }

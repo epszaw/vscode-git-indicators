@@ -1,15 +1,4 @@
 import * as childProcess from 'child_process'
+import * as tp from 'typed-promisify'
 
-function exec(command: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    childProcess.exec(command, (err, res) => {
-      if (!err) {
-        return resolve(res)
-      } else {
-        return reject(err)
-      }
-    })
-  })
-}
-
-export default exec
+export const exec = tp.promisify(childProcess.exec)

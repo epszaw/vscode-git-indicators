@@ -1,14 +1,9 @@
-import * as vscode from 'vscode'
+import { ExtensionContext } from 'vscode'
 import Indicators from './indicators'
 
-let indicators = new Indicators()
+const indicators = new Indicators()
 
-interface IIndicatorsData {
-  added?: Number
-  removed?: Number
-}
-
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: ExtensionContext) {
   indicators.activate(context)
 }
 
