@@ -47,7 +47,18 @@ class GitDiffReader extends Readable implements IGitDiffReader {
 
   parseGitDiff(rawDiff: any): IIndicatorsData {
     if (rawDiff) {
-      const [filesCount = 0, added = 0, removed = 0] = rawDiff.match(/\d+/g)
+      let added = 0
+      let removed = 0
+
+      rawDiff.split(', ').forEach(part => {
+        const [value] = part.match(/\d+/g)
+
+        if (part.includes('insertion')) {
+          added = value
+        } else if (part.includes('deletion')) {
+          removed = value
+        }
+      })
 
       return {
         added,

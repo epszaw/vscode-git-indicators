@@ -23,14 +23,7 @@ export default class Indicators implements IIndicators {
       () => context && this.activate(context)
     )
 
-    this.indicators = this.create(
-      StatusBarAlignment.Left,
-      {
-        added: 0,
-        removed: 0
-      },
-      0
-    )
+    this.indicators = this.create(StatusBarAlignment.Left)
 
     if (!this.reader) {
       this.reader = new GitDiffReader(workDir, fsWatcher)
@@ -42,12 +35,11 @@ export default class Indicators implements IIndicators {
     }
   }
 
-  create(aligment, initialChangesData, initialFilesCount) {
-    const { added, removed } = initialChangesData
+  create(aligment: StatusBarAlignment) {
     let indicators = window.createStatusBarItem(aligment, 10)
 
-    indicators.command = 'git-indicators.toggleGitPanel'
     indicators.text = ''
+    indicators.command = 'git-indicators.toggleGitPanel'
 
     return indicators
   }
@@ -59,12 +51,11 @@ export default class Indicators implements IIndicators {
   }
 
   handleReaderData(data: IIndicatorsData) {
-    const { added, removed } = data
-
-    this.updateIndicators(added, removed)
+    this.updateIndicators(data)
   }
 
-  updateIndicators(added, removed) {
+  updateIndicators(data: IIndicatorsData) {
+    const { added, removed } = data
     const source: string[] = []
 
     if (added && removed) {
