@@ -54,9 +54,34 @@ export default class Indicators implements IIndicators {
     this.updateIndicators(data)
   }
 
-  updateIndicators(data: IIndicatorsData) {
-    const { added, removed } = data
-    const source: string[] = []
+  formatTooltipText(data: IIndicatorsData): string {
+    const { added, removed, filesCount } = data
+    const tooltipParts = []
+
+    if (filesCount) {
+      tooltipParts.push(`affected files: ${filesCount}`)
+    }
+
+    if (added) {
+      tooltipParts.push(`inserions: +${added}`)
+    }
+
+    if (removed) {
+      tooltipParts.push(`deletions: -${removed}`)
+    }
+
+    if (tooltipParts.length > 0) {
+      const tooltipText = tooltipParts.join(', ')
+
+      return `${tooltipText.charAt(0).toUpperCase()}${tooltipText.slice(1)}`
+    }
+
+    return 'Git indicators'
+  }
+
+  formatStatusBarItemText(data: IIndicatorsData): string {
+    const { added, removed, filesCount } = data
+    const source: string[] = filesCount ? [`$(diff) ${filesCount}`] : []
 
     if (added && removed) {
       source.push(`$(diff-modified) +${added}, -${removed}`)
@@ -67,11 +92,24 @@ export default class Indicators implements IIndicators {
     }
 
     if (source.length > 0) {
-      this.indicators.text = source.join('  ')
+      return source.join('  ')
+    }
+
+    return ''
+  }
+
+  updateIndicators(data: IIndicatorsData) {
+    const statusBarText = this.formatStatusBarItemText(data)
+    const tooltipText = this.formatTooltipText(data)
+
+    if (statusBarText.length > 0) {
+      this.indicators.text = statusBarText
+      this.indicators.tooltip = tooltipText
       this.indicators.show()
     } else {
       this.indicators.hide()
-      this.indicators.text = ''
+      this.indicators.text = statusBarText
+      this.indicators.tooltip = tooltipText
     }
   }
 }

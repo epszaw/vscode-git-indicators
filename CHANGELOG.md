@@ -1,5 +1,9 @@
 # Change Log
 
+### 2.1.0
+
+Add files counter and tooltip with some info
+
 ### 2.0.0
 
 Full extension redesign. Remove files counter (will be added later) for more stability.
