@@ -1,4 +1,4 @@
-import { workspace, commands, window, StatusBarAlignment } from 'vscode'
+import { workspace, commands, window, StatusBarItem, StatusBarAlignment } from 'vscode'
 import { debounce } from 'throttle-debounce'
 import { GitDiffReader } from './lib/gitDiffReader'
 
@@ -9,49 +9,45 @@ export default class Indicators implements IIndicators {
   fsWatcher = null
   reader = null
 
-  activate(context?) {
+  activate(context?): void {
     const workDir = workspace.rootPath
     const fsWatcher = workspace.createFileSystemWatcher(`${workspace.rootPath}/**/*`)
-    const toggleGitPanel = commands.registerTextEditorCommand(
-      'git-indicators.toggleGitPanel',
-      () => {
-        commands.executeCommand('workbench.view.scm')
-      }
-    )
-    const activateGitIndicators = commands.registerTextEditorCommand(
-      'git-indicators.initIndicators',
-      () => context && this.activate(context)
-    )
 
     this.indicators = this.create(StatusBarAlignment.Left)
 
     if (!this.reader) {
       this.reader = new GitDiffReader(workDir, fsWatcher)
       this.reader.on('data', this.handleReaderData.bind(this))
-    }
-
-    if (context) {
-      context.subscriptions.push(activateGitIndicators)
+      this.reader.on('error', this.handleReaderError.bind(this))
     }
   }
 
-  create(aligment: StatusBarAlignment) {
+  create(aligment: StatusBarAlignment): StatusBarItem {
     let indicators = window.createStatusBarItem(aligment, 10)
 
     indicators.text = ''
-    indicators.command = 'git-indicators.toggleGitPanel'
+    indicators.tooltip = ''
+    indicators.command = 'workbench.view.scm'
 
     return indicators
   }
 
-  deactivate() {
+  deactivate(): void {
     this.reader.removeListener('data', this.handleReaderData)
+    this.reader.removeListener('error', this.handleReaderError)
+
+    this.reader = null
     this.fsWatcher = null
+
     this.indicators.hide()
   }
 
-  handleReaderData(data: IIndicatorsData) {
+  handleReaderData(data: IIndicatorsData): void {
     this.updateIndicators(data)
+  }
+
+  handleReaderError(err: any): void {
+    window.showErrorMessage(err)
   }
 
   formatTooltipText(data: IIndicatorsData): string {
@@ -63,7 +59,7 @@ export default class Indicators implements IIndicators {
     }
 
     if (added) {
-      tooltipParts.push(`inserions: +${added}`)
+      tooltipParts.push(`insertions: +${added}`)
     }
 
     if (removed) {
@@ -98,7 +94,7 @@ export default class Indicators implements IIndicators {
     return ''
   }
 
-  updateIndicators(data: IIndicatorsData) {
+  updateIndicators(data: IIndicatorsData): void {
     const statusBarText = this.formatStatusBarItemText(data)
     const tooltipText = this.formatTooltipText(data)
 

@@ -39,11 +39,16 @@ class GitDiffReader extends Readable implements IGitDiffReader {
 
   async getParsedGitDiff(cdCommand: string): Promise<IIndicatorsData> {
     const workDirCd = this.getWorkDirCd()
-    const rawDiff = await this.getRawGitDiff(workDirCd)
-    const changedFiles = await this.getRawGitStatus(workDirCd)
-    const changedFilesCount = changedFiles.split('\n').length - 1
 
-    return this.parseGitDiff(rawDiff, changedFilesCount)
+    try {
+      const rawDiff = await this.getRawGitDiff(workDirCd)
+      const changedFiles = await this.getRawGitStatus(workDirCd)
+      const changedFilesCount = changedFiles.split('\n').length - 1
+
+      return this.parseGitDiff(rawDiff, changedFilesCount)
+    } catch (err) {
+      this.emitError(err)
+    }
   }
 
   async fsCahngesHandler() {
@@ -81,6 +86,10 @@ class GitDiffReader extends Readable implements IGitDiffReader {
       removed: 0,
       filesCount: 0
     }
+  }
+
+  emitError(err) {
+    this.emit('error', err)
   }
 
   _read() {
