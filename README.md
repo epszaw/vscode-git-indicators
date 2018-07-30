@@ -1,4 +1,4 @@
-# git-indicators [![Build Status](https://travis-ci.org/lamartire/vscode-git-indicators.svg?branch=master)](https://travis-ci.org/lamartire/vscode-git-indicators)
+# git-indicators [![Build Status](https://travis-ci.org/lamartire/vscode-git-indicators.svg?branch=master)](https://travis-ci.org/lamartire/vscode-git-indicators) [![Greenkeeper badge](https://badges.greenkeeper.io/lamartire/vscode-git-indicators.svg)](https://greenkeeper.io/)
 
 ### Added
 
