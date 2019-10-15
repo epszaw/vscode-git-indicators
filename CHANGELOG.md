@@ -1,5 +1,11 @@
 # Change Log
 
+### 2.1.2
+
+Fixes:
+
+- Support for `git.enabled` (#14)
+
 ### 2.1.0
 
 Add files counter and tooltip with some info

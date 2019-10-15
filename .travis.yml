@@ -3,7 +3,8 @@ sudo: false
 language: node_js
 
 node_js:
-  - v7
+  - 10
+  - 12
 
 os:
   - osx
@@ -17,8 +18,8 @@ before_install:
     fi
 
 install:
-  - npm install
-  - npm run vscode:prepublish
+  - yarn
+  - yarn vscode:prepublish
 
 script:
-  - npm test --silent
+  - yarn test

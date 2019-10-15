@@ -1,7 +1,5 @@
-import { workspace, commands, window, StatusBarItem, StatusBarAlignment } from 'vscode'
-import { debounce } from 'throttle-debounce'
+import { workspace, window, StatusBarItem, StatusBarAlignment } from 'vscode'
 import { GitDiffReader } from './lib/gitDiffReader'
-
 import { IIndicators, IIndicatorsData } from './interfaces'
 
 export default class Indicators implements IIndicators {
@@ -9,14 +7,14 @@ export default class Indicators implements IIndicators {
   fsWatcher = null
   reader = null
 
-  activate(context?): void {
-    const workDir = workspace.rootPath
-    const fsWatcher = workspace.createFileSystemWatcher(`${workspace.rootPath}/**/*`)
+  activate(): void {
+    const { rootPath } = workspace
+    const fsWatcher = workspace.createFileSystemWatcher(`${rootPath}/**/*`)
 
     this.indicators = this.create(StatusBarAlignment.Left)
 
     if (!this.reader) {
-      this.reader = new GitDiffReader(workDir, fsWatcher)
+      this.reader = new GitDiffReader(rootPath, fsWatcher)
       this.reader.on('data', this.handleReaderData.bind(this))
       this.reader.on('error', this.handleReaderError.bind(this))
     }
